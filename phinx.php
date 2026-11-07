@@ -1,25 +1,27 @@
 <?php
 
-require_once './vendor/autoload.php';
+require_once __DIR__ . '/vendor/autoload.php';
 
-// --- CORRECCIÓN DE ERROR "Class BaseMigration not found" ---
-// Cargamos manualmente la clase BaseMigration que está en la carpeta generator
-// Usamos __DIR__ para asegurar que la ruta sea absoluta desde la raíz
+// --- CARGA DE CLASE BASE DE MIGRACIONES ---
 $baseMigrationPath = __DIR__ . '/database/generator/BaseMigration.php';
-
 if (file_exists($baseMigrationPath)) {
     require_once $baseMigrationPath;
 }
 
-// --- CARGA DE DEPENDENCIAS DE SLIM ---
-$settings = require './src/settings.php';
-$app = new \Slim\App($settings);
-$container = $app->getContainer();
-$container->register(new \Conduit\Services\Database\EloquentServiceProvider());
-$config = $container['settings']['database'];
+// --- RESOLUCIÓN ROBUSTA DE VARIABLES DE ENTORNO (Render / Docker) ---
+$dbAdapter = getenv('DB_ADAPTER') ?: ($_ENV['DB_ADAPTER'] ?? ($_SERVER['DB_ADAPTER'] ?? 'mysql'));
+$dbHost    = getenv('DB_HOST')    ?: ($_ENV['DB_HOST']    ?? ($_SERVER['DB_HOST']    ?? '127.0.0.1'));
+$dbName    = getenv('DB_NAME')    ?: ($_ENV['DB_NAME']    ?? ($_SERVER['DB_NAME']    ?? 'conduit'));
+$dbUser    = getenv('DB_USER')    ?: ($_ENV['DB_USER']    ?? ($_SERVER['DB_USER']    ?? 'conduit_user'));
+$dbPass    = getenv('DB_PASS')    ?: ($_ENV['DB_PASS']    ?? ($_SERVER['DB_PASS']    ?? 'secret'));
+$dbPort    = getenv('DB_PORT')    ?: ($_ENV['DB_PORT']    ?? ($_SERVER['DB_PORT']    ?? '3306'));
 
-return
-[
+// Garantizar que el adaptador nunca quede vacío
+if (empty($dbAdapter)) {
+    $dbAdapter = 'mysql';
+}
+
+return [
     'paths' => [
         'migrations' => '%%PHINX_CONFIG_DIR%%/db/migrations',
         'seeds' => '%%PHINX_CONFIG_DIR%%/db/seeds'
@@ -28,12 +30,12 @@ return
         'default_migration_table' => 'phinxlog',
         'default_environment' => 'production',
         'production' => [
-            'adapter' => getenv('DB_ADAPTER') ?: 'mysql',
-            'host'    => getenv('DB_HOST') ?: '127.0.0.1',
-            'name'    => getenv('DB_NAME') ?: 'conduit',
-            'user'    => getenv('DB_USER') ?: 'conduit_user',
-            'pass'    => getenv('DB_PASS') ?: 'secret',
-            'port'    => getenv('DB_PORT') ?: '3306',
+            'adapter' => $dbAdapter,
+            'host'    => $dbHost,
+            'name'    => $dbName,
+            'user'    => $dbUser,
+            'pass'    => $dbPass,
+            'port'    => $dbPort,
             'charset' => 'utf8',
         ]
     ]
