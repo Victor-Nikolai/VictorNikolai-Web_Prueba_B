@@ -18,47 +18,23 @@ $container = $app->getContainer();
 $container->register(new \Conduit\Services\Database\EloquentServiceProvider());
 $config = $container['settings']['database'];
 
-return [
+return
+[
     'paths' => [
-        'migrations' => 'database/migrations',
-        'seeds'      => 'database/seeds',
+        'migrations' => '%%PHINX_CONFIG_DIR%%/db/migrations',
+        'seeds' => '%%PHINX_CONFIG_DIR%%/db/seeds'
     ],
-    'migration_base_class' => 'BaseMigration',
-    'templates' => [
-        'class' => 'TemplateGenerator',
-    ],
-    'aliases' => [
-        'create' => 'CreateTableTemplateGenerator',
-    ],
-
     'environments' => [
-        'default_migration_table' => 'migrations',
-        
-        // LÓGICA AUTOMÁTICA:
-        // Si la variable de entorno APP_ENV es 'production', usa la config de producción (con SSL).
-        // Si no, usa 'development' (tu local).
-        'default_environment' => getenv('APP_ENV') === 'production' ? 'production' : 'development',
-        
-        // ENTORNO LOCAL (Docker Desktop)
-        'development' => [
-            'name'       => $config['database'],
-            // Usa la conexión PDO directa que ya creó tu contenedor localmente
-            'connection' => $container->get('db')->getConnection()->getPdo(),
-        ],
-        
-        // ENTORNO NUBE (Render + TiDB)
+        'default_migration_table' => 'phinxlog',
+        'default_environment' => 'production',
         'production' => [
-            'adapter'   => 'mysql',
-            'host'      => $config['host'],
-            'name'      => $config['database'],
-            'user'      => $config['username'],
-            'pass'      => $config['password'],
-            'port'      => $config['port'],
-            'charset'   => 'utf8',
-            'collation' => 'utf8_unicode_ci',
-            'prefix'    => '',
-            // CONFIGURACIÓN SSL OBLIGATORIA PARA TIDB
-            'mysql_attr_ssl_ca' => '/etc/ssl/certs/ca-certificates.crt',
-        ],
-    ],
+            'adapter' => getenv('DB_ADAPTER') ?: 'mysql',
+            'host'    => getenv('DB_HOST') ?: '127.0.0.1',
+            'name'    => getenv('DB_NAME') ?: 'conduit',
+            'user'    => getenv('DB_USER') ?: 'conduit_user',
+            'pass'    => getenv('DB_PASS') ?: 'secret',
+            'port'    => getenv('DB_PORT') ?: '3306',
+            'charset' => 'utf8',
+        ]
+    ]
 ];
