@@ -38,9 +38,8 @@ return [
             'charset' => 'utf8',
             'mysql_attr_init_command' => 'SET NAMES utf8',
             'options' => [
-                // Forzar cifrado SSL requerido por TiDB Cloud Serverless
-                PDO::MYSQL_ATTR_SSL_CA => true,
                 PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false,
+                PDO::MYSQL_ATTR_SSL_CA => ''
             ]
         ]
     ]
